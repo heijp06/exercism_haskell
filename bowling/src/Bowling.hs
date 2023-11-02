@@ -9,39 +9,18 @@ data BowlingError = IncompleteGame
                   | InvalidRoll { rollIndex :: Int, rollValue :: Int }
   deriving (Eq, Show)
 
-data GameState = GameState { rollsLeft :: [Int]
-                           , frame :: Int
-                           , points :: Int
-                           , firstRoll :: Bool
-                           , firstRollScore :: Int
-                           , afterSpare :: Bool
-                           , firstAfterStrike :: Bool
-                           , secondAfterStrike :: Bool
-                           }
+data Frame = OneBallThrown Int | OneBonusBall Int | TwoBonusBalls Int | Complete Int
+  deriving (Show)
+
+data GameState = GameState { frames :: [Frame], rolls :: [Int] }
 
 newGame :: [Int] -> GameState
-newGame rolls = GameState { rollsLeft = rolls
-                          , frame = 1
-                          , points = 0
-                          , firstRoll = True
-                          , firstRollScore = 0
-                          , afterSpare = False
-                          , firstAfterStrike = False
-                          , secondAfterStrike = False
-                          }
+newGame rolls = GameState { frames = [], rolls = rolls }
 
 score :: [Int] -> Either BowlingError Int
-score rolls = evalStateT bar (newGame rolls)
+score rolls = evalStateT calculate (newGame rolls)
 
-bar :: StateT GameState (Either BowlingError) Int
-bar = do
-  state@GameState{..} <- get
-  case rollsLeft of
-    [] -> lift $ Right points
-    (x:xs) -> do
-      put (state { rollsLeft = xs
-                 , points = points + if afterSpare then 2*x else x
-                 , firstRoll = not firstRoll
-                 , firstRollScore = if firstRoll then x else 0
-                 , afterSpare = firstRollScore + x == 10 })
-      bar
+calculate :: StateT GameState (Either BowlingError) Int
+calculate = do
+  GameState{..} <- get
+  return $ sum rolls
