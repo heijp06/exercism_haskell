@@ -33,7 +33,10 @@ score rolls =  evalStateT calculate (newGame rolls)
 calculate :: Evaluator Int
 calculate = do
   scores <- replicateM 10 frame
-  return $ sum scores
+  GameState{..} <- get
+  case max_roll of
+    _ | max_roll + 1 < length rolls -> lift $ Left $ InvalidRoll 20 0
+    _ -> return $ sum scores
 
 frame :: Evaluator Int
 frame = do
