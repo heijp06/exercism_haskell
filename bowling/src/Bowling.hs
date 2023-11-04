@@ -49,8 +49,11 @@ frame = do
         10 -> do
           roll3 <- peekRoll 0
           return $ 10 + roll3
-        total -> do
-          return total
+        total
+          | total < 10 -> return total
+          | otherwise -> do
+            GameState{..} <- get
+            lift $ Left $ InvalidRoll (current_roll - 1) roll2
 
 getRoll :: Evaluator Int
 getRoll = do
