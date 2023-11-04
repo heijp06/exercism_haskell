@@ -7,8 +7,7 @@ import Control.Monad (guard, replicateM, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Lazy (StateT, evalStateT, get, put)
 
-data BowlingError = NoError
-                  | IncompleteGame
+data BowlingError = IncompleteGame
                   | InvalidRoll { rollIndex :: Int, rollValue :: Int }
   deriving (Eq, Show)
 
@@ -21,7 +20,7 @@ data GameState = GameState { rolls :: [Int]
                            , error :: BowlingError 
                            }
 
-type Evaluator = StateT GameState Maybe
+type Evaluator = StateT GameState (Either BowlingError)
 
 newGame :: [Int] -> GameState
 newGame rolls = GameState { rolls = rolls
@@ -31,9 +30,7 @@ newGame rolls = GameState { rolls = rolls
                           }
 
 score :: [Int] -> Either BowlingError Int
-score rolls = case evalStateT calculate (newGame rolls) of
-  Just score -> Right score
-  _ -> Left IncompleteGame
+score rolls =  evalStateT calculate (newGame rolls)
 
 calculate :: Evaluator Int
 calculate = do
@@ -41,10 +38,7 @@ calculate = do
   return $ sum scores
 
 frame :: Evaluator Int
-frame = strike <|> spare <|> openFrame
-
-strike :: Evaluator Int
-strike = do
+frame = do
   roll <- getRoll
   case roll of
     10 -> do
@@ -52,44 +46,14 @@ strike = do
       y <- getRoll
       rollBack
       rollBack
-      return $ roll + x + y
-    _ -> do
-      rollBack
-      lift Nothing
-
-spare :: Evaluator Int
-spare = do
-  roll <- getRoll
-  case roll of
-    10 -> do
-      rollBack
-      lift Nothing
+      return $ 10 + x + y
     _ -> do
       x <- getRoll
       case roll + x of
         10 -> do
           y <- getRoll
           rollBack
-          return $ roll + x + y
-        _ -> do
-          rollBack
-          rollBack
-          lift Nothing
-
-openFrame :: Evaluator Int
-openFrame = do
-  roll <- getRoll
-  case roll of
-    10 -> do
-      rollBack
-      lift Nothing
-    _ -> do
-      x <- getRoll
-      case roll + x of
-        10 -> do
-          rollBack
-          rollBack
-          lift Nothing
+          return $ 10 + y
         _ -> do
           return $ roll + x
 
@@ -101,14 +65,8 @@ rollBack = do
 getRoll :: Evaluator Int
 getRoll = do
   state@GameState{..} <- get
-  when (current_roll >= length rolls) $ raiseError IncompleteGame
+  when (current_roll >= length rolls) $ lift $ Left IncompleteGame
   let roll = rolls !! current_roll
-  when (roll < 0 || roll > 10) $ raiseError $ InvalidRoll current_roll roll
+  when (roll < 0 || roll > 10) $ lift $ Left $ InvalidRoll current_roll roll
   put state { current_roll = current_roll + 1, max_roll = max current_roll max_roll }
   return $ rolls !! current_roll
-
-raiseError :: BowlingError -> Evaluator ()
-raiseError err = do
-  state@GameState{..} <- get
-  put state { error = err }
-  lift Nothing
