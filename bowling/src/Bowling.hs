@@ -42,7 +42,11 @@ frame = do
     10 -> do
       roll2 <- peekRoll 0
       roll3 <- peekRoll 1
-      return $ 10 + roll2 + roll3
+      case roll2 + roll3 of
+        total | total <= 10 || roll2 == 10 -> return $ total + 10
+        _ -> do
+          GameState{..} <- get
+          lift $ Left $ InvalidRoll (current_roll + 1) roll3
     _ -> do
       roll2 <- getRoll
       case roll1 + roll2 of
