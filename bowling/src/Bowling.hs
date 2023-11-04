@@ -37,29 +37,27 @@ calculate = do
 
 frame :: Evaluator Int
 frame = do
-  roll <- getRoll
-  case roll of
+  roll1 <- getRoll
+  case roll1 of
     10 -> do
-      x <- peekRoll 0
-      y <- peekRoll 1
-      return $ 10 + x + y
+      roll2 <- peekRoll 0
+      roll3 <- peekRoll 1
+      return $ 10 + roll2 + roll3
     _ -> do
-      x <- getRoll
-      case roll + x of
+      roll2 <- getRoll
+      case roll1 + roll2 of
         10 -> do
-          y <- peekRoll 0
-          return $ 10 + y
+          roll3 <- peekRoll 0
+          return $ 10 + roll3
         _ -> do
-          return $ roll + x
+          return $ roll1 + roll2
 
 getRoll :: Evaluator Int
 getRoll = do
+  roll <- peekRoll 0
   state@GameState{..} <- get
-  when (current_roll >= length rolls) $ lift $ Left IncompleteGame
-  let roll = rolls !! current_roll
-  when (roll < 0 || roll > 10) $ lift $ Left $ InvalidRoll current_roll roll
-  put state { current_roll = current_roll + 1, max_roll = max current_roll max_roll }
-  return $ rolls !! current_roll
+  put state { current_roll = current_roll + 1 }
+  return roll
 
 peekRoll :: Int -> Evaluator Int
 peekRoll offset = do
@@ -67,6 +65,6 @@ peekRoll offset = do
   let index = current_roll + offset
   when (index >= length rolls) $ lift $ Left IncompleteGame
   let roll = rolls !! index
-  when (roll < 0 || roll > 10) $ lift $ Left $ InvalidRoll current_roll index
+  when (roll < 0 || roll > 10) $ lift $ Left $ InvalidRoll index roll
   put state { max_roll = max index max_roll }
   return roll
