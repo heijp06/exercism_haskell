@@ -49,8 +49,8 @@ frame = do
         10 -> do
           roll3 <- peekRoll 0
           return $ 10 + roll3
-        _ -> do
-          return $ roll1 + roll2
+        total -> do
+          return total
 
 getRoll :: Evaluator Int
 getRoll = do
