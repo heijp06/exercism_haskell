@@ -10,9 +10,6 @@ data BowlingError = IncompleteGame
                   | InvalidRoll { rollIndex :: Int, rollValue :: Int }
   deriving (Eq, Show)
 
-data Frame = OneBallThrown Int | OneBonusBall Int | TwoBonusBalls Int | Complete Int
-  deriving (Show)
-
 data GameState = GameState { rolls :: [Int]
                            , currentRoll :: Int
                            , maxRoll :: Int
