@@ -5,7 +5,6 @@ module Bowling (score, BowlingError(..)) where
 import Control.Monad (replicateM, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Lazy (StateT, evalStateT, get, put)
-import Prelude hiding (error)
 
 data BowlingError = IncompleteGame
                   | InvalidRoll { rollIndex :: Int, rollValue :: Int }
