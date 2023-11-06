@@ -46,16 +46,13 @@ strike :: Evaluator Int
 strike = do
   roll2 <- peekRoll 0
   roll3 <- peekRoll 1
-  case roll2 + roll3 of
-    total | total <= 10 || roll2 == 10 -> return $ total + 10
-    _ -> do
-      GameState{..} <- get
-      invalidRoll (currentRoll + 1) roll3
+  let total = roll2 + roll3
+  GameState{..} <- get
+  when (total > 10 && roll2 /= 10) $ invalidRoll (currentRoll + 1) roll3
+  return $ total + 10
 
 spare :: Evaluator Int
-spare = do
-  roll3 <- peekRoll 0
-  return $ 10 + roll3
+spare = (+10) <$> peekRoll 0
 
 openFrame :: Int -> Evaluator Int
 openFrame total | total < 10 = return total
