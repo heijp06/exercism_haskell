@@ -15,16 +15,16 @@ data Frame = OneBallThrown Int | OneBonusBall Int | TwoBonusBalls Int | Complete
   deriving (Show)
 
 data GameState = GameState { rolls :: [Int]
-                           , current_roll :: Int
-                           , max_roll :: Int
+                           , currentRoll :: Int
+                           , maxRoll :: Int
                            } deriving Show
 
 type Evaluator = StateT GameState (Either BowlingError)
 
 newGame :: [Int] -> GameState
 newGame rolls = GameState { rolls = rolls
-                          , current_roll = 0
-                          , max_roll = 0
+                          , currentRoll = 0
+                          , maxRoll = 0
                           }
 
 score :: [Int] -> Either BowlingError Int
@@ -34,8 +34,9 @@ calculate :: Evaluator Int
 calculate = do
   scores <- replicateM 10 frame
   GameState{..} <- get
-  case max_roll of
-    _ | max_roll + 1 < length rolls -> lift $ Left $ InvalidRoll (max_roll + 1) (rolls !! (max_roll + 1))
+  let firstUnusedIndex = maxRoll + 1
+  case firstUnusedIndex of
+    _ | firstUnusedIndex < length rolls -> lift $ Left $ InvalidRoll firstUnusedIndex (rolls !! firstUnusedIndex)
     _ -> return $ sum scores
 
 frame :: Evaluator Int
@@ -49,7 +50,7 @@ frame = do
         total | total <= 10 || roll2 == 10 -> return $ total + 10
         _ -> do
           GameState{..} <- get
-          lift $ Left $ InvalidRoll (current_roll + 1) roll3
+          lift $ Left $ InvalidRoll (currentRoll + 1) roll3
     _ -> do
       roll2 <- getRoll
       case roll1 + roll2 of
@@ -60,21 +61,21 @@ frame = do
           | total < 10 -> return total
           | otherwise -> do
             GameState{..} <- get
-            lift $ Left $ InvalidRoll (current_roll - 1) roll2
+            lift $ Left $ InvalidRoll (currentRoll - 1) roll2
 
 getRoll :: Evaluator Int
 getRoll = do
   roll <- peekRoll 0
   state@GameState{..} <- get
-  put state { current_roll = current_roll + 1 }
+  put state { currentRoll = currentRoll + 1 }
   return roll
 
 peekRoll :: Int -> Evaluator Int
 peekRoll offset = do
   state@GameState{..} <- get
-  let index = current_roll + offset
+  let index = currentRoll + offset
   when (index >= length rolls) $ lift $ Left IncompleteGame
   let roll = rolls !! index
   when (roll < 0 || roll > 10) $ lift $ Left $ InvalidRoll index roll
-  put state { max_roll = max index max_roll }
+  put state { maxRoll = max index maxRoll }
   return roll
