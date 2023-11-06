@@ -36,7 +36,7 @@ calculate = do
   GameState{..} <- get
   let firstUnusedIndex = maxRoll + 1
   case firstUnusedIndex of
-    _ | firstUnusedIndex < length rolls -> lift $ Left $ InvalidRoll firstUnusedIndex (rolls !! firstUnusedIndex)
+    _ | firstUnusedIndex < length rolls -> invalidRoll firstUnusedIndex $ rolls !! firstUnusedIndex
     _ -> return $ sum scores
 
 frame :: Evaluator Int
@@ -50,7 +50,7 @@ frame = do
         total | total <= 10 || roll2 == 10 -> return $ total + 10
         _ -> do
           GameState{..} <- get
-          lift $ Left $ InvalidRoll (currentRoll + 1) roll3
+          invalidRoll (currentRoll + 1) roll3
     _ -> do
       roll2 <- getRoll
       case roll1 + roll2 of
@@ -61,7 +61,7 @@ frame = do
           | total < 10 -> return total
           | otherwise -> do
             GameState{..} <- get
-            lift $ Left $ InvalidRoll (currentRoll - 1) roll2
+            invalidRoll (currentRoll - 1) roll2
 
 getRoll :: Evaluator Int
 getRoll = do
@@ -76,6 +76,9 @@ peekRoll offset = do
   let index = currentRoll + offset
   when (index >= length rolls) $ lift $ Left IncompleteGame
   let roll = rolls !! index
-  when (roll < 0 || roll > 10) $ lift $ Left $ InvalidRoll index roll
+  when (roll < 0 || roll > 10) $ invalidRoll index roll
   put state { maxRoll = max index maxRoll }
   return roll
+
+invalidRoll :: Int -> Int -> Evaluator a
+invalidRoll index roll = lift $ Left $ InvalidRoll index roll
