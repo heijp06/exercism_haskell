@@ -40,11 +40,7 @@ frame = do
       roll2 <- getRoll
       case roll1 + roll2 of
         10 -> spare
-        total
-          | total < 10 -> return total
-          | otherwise -> do
-            GameState{..} <- get
-            invalidRoll (currentRoll - 1) roll2
+        total -> openFrame total
 
 strike :: Evaluator Int
 strike = do
@@ -60,6 +56,13 @@ spare :: Evaluator Int
 spare = do
   roll3 <- peekRoll 0
   return $ 10 + roll3
+
+openFrame :: Int -> Evaluator Int
+openFrame total | total < 10 = return total
+openFrame _ = do
+  GameState{..} <- get
+  roll2 <- peekRoll (-1)
+  invalidRoll (currentRoll - 1) roll2
 
 getRoll :: Evaluator Int
 getRoll = do
