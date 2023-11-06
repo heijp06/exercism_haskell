@@ -28,9 +28,8 @@ calculate = do
   scores <- replicateM 10 frame
   GameState{..} <- get
   let firstUnusedIndex = maxRoll + 1
-  case firstUnusedIndex of
-    _ | firstUnusedIndex < length rolls -> invalidRoll firstUnusedIndex $ rolls !! firstUnusedIndex
-    _ -> return $ sum scores
+  when (firstUnusedIndex < length rolls) $ invalidRoll firstUnusedIndex (rolls !! firstUnusedIndex)
+  return $ sum scores
 
 frame :: Evaluator Int
 frame = do
