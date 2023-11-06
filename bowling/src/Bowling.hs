@@ -35,7 +35,7 @@ calculate = do
   scores <- replicateM 10 frame
   GameState{..} <- get
   case max_roll of
-    _ | max_roll + 1 < length rolls -> lift $ Left $ InvalidRoll 20 0
+    _ | max_roll + 1 < length rolls -> lift $ Left $ InvalidRoll (max_roll + 1) (rolls !! (max_roll + 1))
     _ -> return $ sum scores
 
 frame :: Evaluator Int
