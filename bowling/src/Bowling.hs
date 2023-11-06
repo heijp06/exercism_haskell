@@ -17,14 +17,11 @@ data GameState = GameState { rolls :: [Int]
 
 type Evaluator = StateT GameState (Either BowlingError)
 
-newGame :: [Int] -> GameState
-newGame rolls = GameState { rolls = rolls
-                          , currentRoll = 0
-                          , maxRoll = 0
-                          }
-
 score :: [Int] -> Either BowlingError Int
-score rolls =  evalStateT calculate (newGame rolls)
+score rolls =  evalStateT calculate $ GameState { rolls = rolls
+                                                , currentRoll = 0
+                                                , maxRoll = 0
+                                                }
 
 calculate :: Evaluator Int
 calculate = do
